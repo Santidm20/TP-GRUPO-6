@@ -1,54 +1,63 @@
-
-import { useState, useEffect } from "react";
-import "./App.css";
-import { TaskForm } from "./components/TaskForm/TaskForm";
-import Swal from "sweetalert2";
+import React, { useState } from 'react';
+import TodoList from './components/TodoList/TodoList';
+import CreateTaskModal from './components/CreateTaskModal/CreateTaskModal';
+import TaskDetailModal from './components/TaskDetailModal/TaskDetailModal';
 
 function App() {
-  const [tasksItems, setTasksItems] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  function createNewTask(taskName) {
-    if (!tasksItems.find((task) => task.nombre === taskName)) {
-      setTasksItems([...tasksItems, { nombre: taskName, realizada: false }]);
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "La tarea ya existe",
-      });
-    }
-  }
+  const openCreateModal = () => {
+    setCreateModalOpen(true);
+  };
 
-  useEffect(() => {
-    let data = localStorage.getItem("tasks");
-    if (data) {
-      setTasksItems(JSON.parse(data));
-    }
-  }, []); // <-- Agrega la lista de dependencias vacía
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+  };
 
-  useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasksItems));
-  }, [tasksItems]);
+  const openTaskDetailModal = (task) => {
+    setSelectedTask(task);
+  };
+
+  const closeTaskDetailModal = () => {
+    setSelectedTask(null);
+  };
+
+  const addTask = (newTask) => {
+    setTasks([...tasks, newTask]);
+    closeCreateModal();
+  };
+
+  const deleteTask = (taskId) => {
+    setTasks(tasks.filter((task) => task.id !== taskId));
+    closeTaskDetailModal();
+  };
+
+  const editTask = (editedTask) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => (task.id === editedTask.id ? editedTask : task))
+    );
+    closeTaskDetailModal();
+  };
 
   return (
-    <>
-      <TaskForm createNewTask={createNewTask} />
-
-      <table>
-        <thead>
-          <tr>
-            <th>Tareas</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasksItems.map((task) => (
-            <tr key={task.nombre}>
-              <td>{task.nombre}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+    <div>
+      <h1>Todo App</h1>
+      <button onClick={openCreateModal}>+ Create Task</button>
+      <TodoList tasks={tasks} openTaskDetailModal={openTaskDetailModal} />
+      {isCreateModalOpen && (
+        <CreateTaskModal addTask={addTask} closeCreateModal={closeCreateModal} />
+      )}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          deleteTask={deleteTask}
+          editTask={editTask}
+          closeTaskDetailModal={closeTaskDetailModal}
+        />
+      )}
+    </div>
   );
 }
 
